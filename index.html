@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <title>Prayer + Meditation Routine</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root { --bg:#0b0b0c; --card:#141416; --muted:#a8a8ad; --text:#f5f5f7; --line:#242427; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    header{position:sticky;top:0;background:rgba(11,11,12,.9);backdrop-filter: blur(10px);border-bottom:1px solid var(--line);padding:14px 16px;z-index:10}
+    header h1{margin:0;font-size:16px;letter-spacing:.2px}
+    header .sub{margin-top:4px;font-size:12px;color:var(--muted)}
+    main{padding:16px;max-width:920px;margin:0 auto}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width:900px){.grid{grid-template-columns:1.2fr .8fr}}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{appearance:none;border:1px solid var(--line);background:#1c1c20;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer}
+    .btn.primary{background:#2a2a30;border-color:#3a3a44}
+    .btn.good{background:#173018;border-color:#265c2a}
+    .btn.warn{background:#302017;border-color:#5c3a26}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);padding:8px 10px;border-radius:999px;background:#101012}
+    .muted{color:var(--muted)}
+    .title{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+    .title h2{margin:0;font-size:14px}
+    .title .meta{font-size:12px;color:var(--muted)}
+    label{font-size:12px;color:var(--muted)}
+    input, textarea, select{
+      width:100%;margin-top:6px;background:#0f0f12;color:var(--text);
+      border:1px solid var(--line);border-radius:12px;padding:10px;outline:none
+    }
+    textarea{min-height:90px;resize:vertical}
+    .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .kpi .box{background:#101012;border:1px solid var(--line);border-radius:14px;padding:10px}
+    .kpi .box .v{font-size:18px;font-weight:650}
+    .kpi .box .l{font-size:11px;color:var(--muted)}
+    .sep{height:1px;background:var(--line);margin:12px 0}
+    .small{font-size:12px}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{background:#101012;border:1px solid var(--line);border-radius:14px;padding:10px}
+    .item .top{display:flex;justify-content:space-between;gap:10px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    .hidden{display:none}
+    .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+      background:#101012;border:1px solid var(--line);padding:10px 12px;border-radius:999px;
+      color:var(--text);font-size:12px;opacity:0;pointer-events:none;transition:opacity .18s ease}
+    .toast.show{opacity:1}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Prayer + Meditation Routine</h1>
+  <div class="sub">Flexible daily practice • measurable progress • offline ready</div>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- LEFT -->
+    <section class="card">
+      <div class="title">
+        <h2>Today</h2>
+        <div class="meta" id="todayMeta"></div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="row">
+        <span class="pill"><span class="muted">Tier</span>
+          <select id="tier">
+            <option value="anchor">Tier 1 — Anchor (5–7 min)</option>
+            <option value="standard" selected>Tier 2 — Standard (12–20 min)</option>
+            <option value="deep">Tier 3 — Deep (30–45 min)</option>
+          </select>
+        </span>
+
+        <button class="btn primary" id="applyTier">Load Today’s Flow</button>
+        <button class="btn" id="resetToday">Reset</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="title">
+        <h2>Flow</h2>
+        <div class="meta">Tap steps as you complete them</div>
+      </div>
+
+      <div class="list" id="flow"></div>
+
+      <div class="sep"></div>
+
+      <div class="title">
+        <h2>Timer</h2>
+        <div class="meta"><span class="mono" id="timerDisplay">00:00</span></div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn good" id="startBtn">Start</button>
+        <button class="btn warn" id="pauseBtn" disabled>Pause</button>
+        <button class="btn" id="stopBtn" disabled>Stop</button>
+
+        <span class="pill">
+          <span class="muted">Minutes</span>
+          <input id="minutesInput" type="number" min="1" max="120" value="12" style="width:90px;margin:0;padding:8px 10px" />
+        </span>
+
+        <button class="btn primary" id="setMinutesBtn">Set</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="title">
+        <h2>Log (Measurable)</h2>
+        <div class="meta">Track behaviors, not moods</div>
+      </div>
+
+      <div class="kpi" style="margin-top:10px">
+        <div class="box">
+          <div class="v" id="kpiStreak">0</div>
+          <div class="l">Day streak</div>
+        </div>
+        <div class="box">
+          <div class="v" id="kpiMinutes">0</div>
+          <div class="l">Minutes (7 days)</div>
+        </div>
+        <div class="box">
+          <div class="v" id="kpiReturns">0</div>
+          <div class="l">“Noticed & returned” (7 days)</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div style="flex:1;min-width:220px">
+          <label>Distractions noticed (count)</label>
+          <input id="returns" type="number" min="0" max="200" value="0" />
+        </div>
+        <div style="flex:1;min-width:220px">
+          <label>Practice minutes (today)</label>
+          <input id="minsToday" type="number" min="0" max="180" value="0" />
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label>One sentence (What did I notice?)</label>
+        <textarea id="note" placeholder="Example: Noticed I was planning; returned to breath; felt more present afterward."></textarea>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="saveLog">Save today</button>
+        <button class="btn" id="exportBtn">Export JSON</button>
+        <button class="btn" id="wipeBtn">Wipe data</button>
+      </div>
+
+      <p class="small muted" style="margin:12px 0 0">
+        Tip: More “distractions noticed” can mean you’re improving awareness. Progress = noticing + returning.
+      </p>
+    </section>
+
+    <!-- RIGHT -->
+    <aside class="card">
+      <div class="title">
+        <h2>Weekly Review</h2>
+        <div class="meta" id="weekMeta"></div>
+      </div>
+      <div class="sep"></div>
+
+      <div class="row">
+        <div style="flex:1;min-width:180px">
+          <label>Consistency (1–10)</label>
+          <input id="wCons" type="number" min="1" max="10" value="7" />
+        </div>
+        <div style="flex:1;min-width:180px">
+          <label>Attentiveness (1–10)</label>
+          <input id="wAttn" type="number" min="1" max="10" value="7" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1;min-width:180px">
+          <label>Emotional recovery (1–10)</label>
+          <input id="wRec" type="number" min="1" max="10" value="7" />
+        </div>
+        <div style="flex:1;min-width:180px">
+          <label>Presence w/ others (1–10)</label>
+          <input id="wPres" type="number" min="1" max="10" value="7" />
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label>Reflection (one sentence)</label>
+        <textarea id="wRef" placeholder="This week I noticed…"></textarea>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="saveWeek">Save weekly review</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="title">
+        <h2>Recent Logs</h2>
+        <div class="meta">Last 10 days</div>
+      </div>
+      <div class="list" id="recent" style="margin-top:10px"></div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast">Saved</div>
+</main>
+
+<script>
+  // ----- PWA service worker -----
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+  }
+
+  // ----- Utilities -----
+  const $ = (id) => document.getElementById(id);
+  const todayStr = () => new Date().toISOString().slice(0,10);
+  const startOfWeekISO = (d=new Date()) => {
+    // ISO week starts Monday
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() - day + 1);
+    return date.toISOString().slice(0,10);
+  };
+  const toast = (msg="Saved") => {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1200);
+  };
+
+  const STORAGE_KEY = "pm_app_v1";
+  const loadState = () => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { logs:{}, weeks:{} , flowByDay:{} }; }
+    catch { return { logs:{}, weeks:{} , flowByDay:{} }; }
+  };
+  const saveState = (s) => localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+
+  // ----- Practice flows -----
+  const FLOWS = {
+    anchor: [
+      { key:"ground", title:"Grounding breath", minutes:2, detail:"Hand on chest/belly. Slow inhale/exhale. Land your attention in the body." },
+      { key:"prayer", title:"Prayer: honest naming", minutes:3, detail:"Gratitude → fear/weight → need/help. Simple, direct language." },
+      { key:"listen", title:"Silence: listening", minutes:2, detail:"No agenda. When thoughts arise: label + return to listening." },
+    ],
+    standard: [
+      { key:"settle", title:"Settle the body", minutes:4, detail:"Relax shoulders/jaw. 3 deep breaths. Find an upright but easy posture." },
+      { key:"med", title:"Meditation: breath anchor + labeling", minutes:8, detail:"Anchor on breath. When distracted: label (thinking/planning/worrying) and return." },
+      { key:"pray", title:"Prayer: intention/outcome", minutes:4, detail:"Name one quality (patience/courage). Ask to notice moments and choose differently." },
+      { key:"close", title:"Close: 1 sentence reflection", minutes:2, detail:"What did I notice? What was difficult? What surprised me?" },
+    ],
+    deep: [
+      { key:"settle", title:"Settle + soft effort", minutes:6, detail:"Alert + relaxed + curious. Let effort be gentle, not tight." },
+      { key:"scan", title:"Body scan", minutes:12, detail:"Feet → head. Notice sensation without fixing. Return when mind wanders." },
+      { key:"med", title:"Meditation: breath + counting", minutes:12, detail:"Count 1–10, restart. Each restart is a rep (not a failure)." },
+      { key:"pray", title:"Prayer: 3-phase", minutes:10, detail:"Grounding → honest naming → listening. Keep it human and specific." },
+      { key:"journal", title:"Journaling (2 prompts)", minutes:5, detail:"1) What did I notice? 2) Where can I practice this today?" },
+    ]
+  };
+
+  // ----- UI: date meta -----
+  $("todayMeta").textContent = `${new Date().toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",year:"numeric"})}`;
+  $("weekMeta").textContent = `Week of ${new Date(startOfWeekISO()).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}`;
+
+  // ----- Flow rendering -----
+  let state = loadState();
+  const day = todayStr();
+
+  function getDayFlowTier() {
+    return state.flowByDay[day]?.tier || $("tier").value;
+  }
+
+  function renderFlow(tier) {
+    const steps = FLOWS[tier];
+    const container = $("flow");
+    container.innerHTML = "";
+
+    // persist tier for today
+    state.flowByDay[day] = state.flowByDay[day] || { tier, done:{} };
+    state.flowByDay[day].tier = tier;
+    state.flowByDay[day].done = state.flowByDay[day].done || {};
+    saveState(state);
+
+    // set suggested minutes
+    const suggested = steps.reduce((a,s)=>a+s.minutes,0);
+    $("minutesInput").value = suggested;
+
+    steps.forEach((s) => {
+      const done = !!state.flowByDay[day].done[s.key];
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `
+        <div class="top">
+          <div>
+            <div style="font-weight:650">${s.title}</div>
+            <div class="muted small">${s.minutes} min • ${s.detail}</div>
+          </div>
+          <button class="btn ${done ? "good" : ""}" data-step="${s.key}">
+            ${done ? "Done" : "Mark"}
+          </button>
+        </div>
+      `;
+      div.querySelector("button").addEventListener("click", (e) => {
+        const k = e.currentTarget.getAttribute("data-step");
+        state.flowByDay[day].done[k] = !state.flowByDay[day].done[k];
+        saveState(state);
+        renderFlow(getDayFlowTier());
+        toast("Updated");
+      });
+      container.appendChild(div);
+    });
+  }
+
+  $("applyTier").addEventListener("click", () => renderFlow($("tier").value));
+  $("resetToday").addEventListener("click", () => {
+    delete state.flowByDay[day];
+    saveState(state);
+    renderFlow($("tier").value);
+    toast("Reset");
+  });
+
+  renderFlow(getDayFlowTier());
+
+  // ----- Timer -----
+  let timer = { running:false, remaining:0, interval:null };
+  const renderTimer = () => {
+    const m = Math.floor(timer.remaining / 60);
+    const s = timer.remaining % 60;
+    $("timerDisplay").textContent = `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  };
+  const setTimerMinutes = (mins) => {
+    timer.remaining = Math.max(0, Math.floor(mins * 60));
+    renderTimer();
+  };
+  $("setMinutesBtn").addEventListener("click", () => {
+    const mins = Number($("minutesInput").value || 0);
+    setTimerMinutes(mins);
+    toast("Timer set");
+  });
+
+  function startTimer() {
+    if (timer.running) return;
+    if (timer.remaining <= 0) setTimerMinutes(Number($("minutesInput").value || 0));
+    timer.running = true;
+    $("startBtn").disabled = true;
+    $("pauseBtn").disabled = false;
+    $("stopBtn").disabled = false;
+
+    timer.interval = setInterval(() => {
+      timer.remaining = Math.max(0, timer.remaining - 1);
+      renderTimer();
+      if (timer.remaining === 0) {
+        stopTimer(true);
+        toast("Timer complete");
+        // auto-suggest minutes into log
+        const logged = Number($("minsToday").value || 0);
+        const add = Number($("minutesInput").value || 0);
+        $("minsToday").value = logged ? logged : add;
+      }
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    if (!timer.running) return;
+    timer.running = false;
+    clearInterval(timer.interval);
+    timer.interval = null;
+    $("startBtn").disabled = false;
+    $("pauseBtn").disabled = true;
+    $("stopBtn").disabled = false;
+    toast("Paused");
+  }
+
+  function stopTimer(completed=false) {
+    clearInterval(timer.interval);
+    timer.interval = null;
+    timer.running = false;
+    $("startBtn").disabled = false;
+    $("pauseBtn").disabled = true;
+    $("stopBtn").disabled = true;
+    if (!completed) {
+      setTimerMinutes(Number($("minutesInput").value || 0));
+      toast("Stopped");
+    }
+  }
+
+  $("startBtn").addEventListener("click", startTimer);
+  $("pauseBtn").addEventListener("click", pauseTimer);
+  $("stopBtn").addEventListener("click", () => stopTimer(false));
+
+  // Initialize timer display
+  setTimerMinutes(Number($("minutesInput").value || 12));
+
+  // ----- Logging -----
+  function computeStreak(logs) {
+    // count consecutive days ending today with mins>0 OR returns>=0 saved
+    let streak = 0;
+    const d = new Date();
+    for (;;) {
+      const key = d.toISOString().slice(0,10);
+      const entry = logs[key];
+      if (!entry || (Number(entry.mins||0) <= 0 && String(entry.note||"").trim()==="" && Number(entry.returns||0)===0)) break;
+      streak++;
+      d.setDate(d.getDate() - 1);
+    }
+    return streak;
+  }
+
+  function lastNDaysKeys(n=7) {
+    const keys = [];
+    const d = new Date();
+    for (let i=0;i<n;i++){
+      keys.push(d.toISOString().slice(0,10));
+      d.setDate(d.getDate()-1);
+    }
+    return keys;
+  }
+
+  function refreshKPIs() {
+    state = loadState();
+    const logs = state.logs || {};
+    const streak = computeStreak(logs);
+
+    const keys = lastNDaysKeys(7);
+    const mins7 = keys.reduce((a,k)=>a + Number(logs[k]?.mins||0), 0);
+    const ret7 = keys.reduce((a,k)=>a + Number(logs[k]?.returns||0), 0);
+
+    $("kpiStreak").textContent = streak;
+    $("kpiMinutes").textContent = mins7;
+    $("kpiReturns").textContent = ret7;
+  }
+
+  function loadTodayLog() {
+    state = loadState();
+    const entry = state.logs[day] || { mins:0, returns:0, note:"" };
+    $("minsToday").value = entry.mins ?? 0;
+    $("returns").value = entry.returns ?? 0;
+    $("note").value = entry.note ?? "";
+  }
+
+  $("saveLog").addEventListener("click", () => {
+    state = loadState();
+    state.logs[day] = {
+      mins: Number($("minsToday").value || 0),
+      returns: Number($("returns").value || 0),
+      note: String($("note").value || "").trim(),
+      tier: getDayFlowTier(),
+      savedAt: new Date().toISOString()
+    };
+    saveState(state);
+    refreshKPIs();
+    renderRecent();
+    toast("Saved today");
+  });
+
+  $("exportBtn").addEventListener("click", () => {
+    state = loadState();
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `prayer_meditation_export_${todayStr()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  $("wipeBtn").addEventListener("click", () => {
+    if (!confirm("Wipe all app data on this device?")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state = loadState();
+    loadTodayLog();
+    renderFlow($("tier").value);
+    refreshKPIs();
+    renderRecent();
+    toast("Wiped");
+  });
+
+  // ----- Weekly review -----
+  function loadWeek() {
+    state = loadState();
+    const wk = startOfWeekISO();
+    const entry = state.weeks[wk] || { cons:7, attn:7, rec:7, pres:7, ref:"" };
+    $("wCons").value = entry.cons;
+    $("wAttn").value = entry.attn;
+    $("wRec").value = entry.rec;
+    $("wPres").value = entry.pres;
+    $("wRef").value = entry.ref;
+  }
+
+  $("saveWeek").addEventListener("click", () => {
+    state = loadState();
+    const wk = startOfWeekISO();
+    state.weeks[wk] = {
+      cons: Number($("wCons").value || 7),
+      attn: Number($("wAttn").value || 7),
+      rec: Number($("wRec").value || 7),
+      pres: Number($("wPres").value || 7),
+      ref: String($("wRef").value || "").trim(),
+      savedAt: new Date().toISOString()
+    };
+    saveState(state);
+    toast("Saved week");
+  });
+
+  // ----- Recent logs -----
+  function renderRecent() {
+    state = loadState();
+    const container = $("recent");
+    container.innerHTML = "";
+    const logs = state.logs || {};
+    const keys = Object.keys(logs).sort().reverse().slice(0,10);
+
+    if (!keys.length) {
+      const div = document.createElement("div");
+      div.className = "muted small";
+      div.textContent = "No logs yet. Save today to start tracking.";
+      container.appendChild(div);
+      return;
+    }
+
+    keys.forEach((k) => {
+      const e = logs[k];
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `
+        <div class="top">
+          <div>
+            <div style="font-weight:650">${k} • ${String(e.tier||"").toUpperCase()}</div>
+            <div class="muted small">${Number(e.mins||0)} min • returns: ${Number(e.returns||0)}</div>
+          </div>
+          <button class="btn" data-load="${k}">Load</button>
+        </div>
+        ${e.note ? `<div class="small" style="margin-top:8px">${escapeHtml(e.note)}</div>` : ``}
+      `;
+      div.querySelector("button").addEventListener("click", (ev) => {
+        const dk = ev.currentTarget.getAttribute("data-load");
+        const entry = logs[dk];
+        if (!entry) return;
+        $("minsToday").value = entry.mins ?? 0;
+        $("returns").value = entry.returns ?? 0;
+        $("note").value = entry.note ?? "";
+        toast("Loaded log");
+      });
+      container.appendChild(div);
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&","&amp;").replaceAll("<","&lt;")
+      .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // init
+  loadTodayLog();
+  loadWeek();
+  refreshKPIs();
+  renderRecent();
+</script>
+</body>
+</html>
